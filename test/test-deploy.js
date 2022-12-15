@@ -1,44 +1,49 @@
 const { ethers } = require("hardhat");
 const { expect, assert } = require("chai");
 
-require("@nomiclabs/hardhat-waffle");
-require("hardhat-gas-reporter");
-require("./tasks/block-number");
-require("@nomiclabs/hardhat-etherscan");
-require("dotenv").config();
-require("solidity-coverage");
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
+// describe("SimpleStorage", () => {})
+describe("SimpleStorage", function () {
+  // let simpleStorageFactory
+  // let simpleStorage
+  let simpleStorageFactory, simpleStorage;
+  beforeEach(async function () {
+    simpleStorageFactory = await ethers.getContractFactory("SimpleStorage");
+    simpleStorage = await simpleStorageFactory.deploy();
+  });
 
-const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
+  it("Should start with a favorite number of 0", async function () {
+    const currentValue = await simpleStorage.retrieve();
+    const expectedValue = "0";
+    // assert
+    // expect
+    assert.equal(currentValue.toString(), expectedValue);
+    // expect(currentValue.toString()).to.equal(expectedValue)
+  });
+  it("Should update when we call store", async function () {
+    const expectedValue = "7";
+    const transactionResponse = await simpleStorage.store(expectedValue);
+    await transactionResponse.wait(1);
 
-module.exports = {
-  defaultNetwork: "hardhat",
-  networks: {
-    hardhat: {},
-    goerli: {
-      url: GOERLI_RPC_URL,
-      accounts: [PRIVATE_KEY],
-      chainId: 5,
-    },
-    localhost: {
-      url: "http://localhost:8545",
-      chainId: 31337,
-    },
-  },
-  solidity: "0.8.8",
-  etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
-  },
-  gasReporter: {
-    enabled: true,
-    currency: "USD",
-    outputFile: "gas-report.txt",
-    noColors: true,
-    coinmarketcap: COINMARKETCAP_API_KEY,
-  },
-};
+    const currentValue = await simpleStorage.retrieve();
+    assert.equal(currentValue.toString(), expectedValue);
+  });
+
+  // Extra - this is not in the video
+  it("Should work correctly with the people struct and array", async function () {
+    const expectedPersonName = "Patrick";
+    const expectedFavoriteNumber = "16";
+    const transactionResponse = await simpleStorage.addPerson(
+      expectedPersonName,
+      expectedFavoriteNumber
+    );
+    await transactionResponse.wait(1);
+    const { favoriteNumber, name } = await simpleStorage.people(0);
+    // We could also do it like this
+    // const person = await simpleStorage.people(0)
+    // const favNumber = person.favoriteNumber
+    // const pName = person.name
+
+    assert.equal(name, expectedPersonName);
+    assert.equal(favoriteNumber, expectedFavoriteNumber);
+  });
+});
